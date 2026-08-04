@@ -1,0 +1,77 @@
+{
+  "name": "jupyter-watches",
+  "author": "lumine-code",
+  "description": "Watch expressions re-evaluated after every kernel execution.",
+  "repository": "https://github.com/lumine-code/jupyter-watches",
+  "bugs": {
+    "url": "https://github.com/lumine-code/jupyter-watches/issues"
+  },
+  "homepage": "https://github.com/lumine-code/jupyter-watches#readme",
+  "keywords": [
+    "expression",
+    "monitor",
+    "kernel",
+    "repl",
+    "history",
+    "python"
+  ],
+  "version": "1.0.0",
+  "license": "MIT",
+  "engines": {
+    "atom": ">=1.100.0 <2.0.0"
+  },
+  "backgroundTips": [
+    "You can watch the selected expression re-evaluate after every run with {{ 'jupyter-watches:add' | keystroke }}"
+  ],
+  "main": "./lib/main",
+  "activationCommands": {
+    "atom-workspace": [
+      "jupyter-watches:toggle"
+    ],
+    "atom-text-editor:not([mini])": [
+      "jupyter-watches:add",
+      "jupyter-watches:remove"
+    ]
+  },
+  "configSchema": {
+    "keepOpen": {
+      "title": "Leave panel open",
+      "description": "Do not close the panel when the current editor has no running kernel.",
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "scripts": {
+    "test": "lumine --test spec",
+    "lint": "eslint . --max-warnings 0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "consumedServices": {
+    "jupyter.kernel": {
+      "versions": {
+        "^1.0.0": "consumeJupyterKernel"
+      }
+    },
+    "jupyter.output": {
+      "versions": {
+        "^1.0.0": "consumeJupyterOutput"
+      }
+    },
+    "autocomplete.watch-editor": {
+      "versions": {
+        "^1.0.0": "consumeAutocompleteWatchEditor"
+      }
+    }
+  },
+  "dependencies": {
+    "@lumine-code/etch": "https://github.com/lumine-code/etch.git#5801d1e3dd5078db7b575d55e72c6e85bd0dcf53"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.8.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.7.0",
+    "prettier": "^3.9.6"
+  }
+}

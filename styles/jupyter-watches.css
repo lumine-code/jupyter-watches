@@ -1,0 +1,162 @@
+/*
+ * The panel used to be nested inside `.jupyter-repl`; it is rooted on its own
+ * pane element now. The value history and the outputs inside it are rendered
+ * by jupyter-repl's `jupyter.output` components, so the `.history`,
+ * `.multiline-container` and media rules mirror the ones that style those
+ * components inside that package's own panes.
+ */
+.jupyter-watches {
+  height: 100%;
+
+  .sidebar {
+    padding: 10px;
+    overflow-y: auto;
+    height: 100%;
+  }
+
+  .multiline-container {
+    display: flex;
+    border: solid 1px var(--base-border-color);
+    width: 100%;
+    overflow: auto;
+    padding: var(--component-padding);
+    max-height: 450px;
+
+    &[data-wrap-output="true"] {
+      code,
+      pre {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+    }
+
+    /* Style fix for plotly toolbar */
+    .modebar-group {
+      display: flex;
+    }
+  }
+
+  video,
+  img,
+  svg {
+    object-fit: contain !important;
+    width: auto !important;
+    height: auto !important;
+    max-width: 100% !important;
+    max-height: 450px !important;
+  }
+
+  .history {
+    display: flex;
+    flex-direction: column;
+
+    .slider {
+      padding: calc(var(--component-padding) / 2);
+
+      /* Prev / counter / next on one row: buttons at the edges, counter centered. */
+      .current-output {
+        display: flex;
+        align-items: center;
+        gap: var(--component-padding);
+
+        > span:not(.btn) {
+          flex: 1;
+          text-align: center;
+        }
+      }
+
+      .input-range {
+        width: 100%;
+        cursor: pointer;
+
+        &::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          background: var(--background-color-selected);
+        }
+
+        &:focus {
+          &::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            background-color: var(--button-background-color-selected);
+            border: 1px solid var(--background-color-selected);
+          }
+
+          &::-webkit-slider-runnable-track {
+            -webkit-appearance: none;
+            background: var(--background-color-selected);
+          }
+        }
+      }
+    }
+  }
+
+  .watch-view {
+    margin-top: 10px;
+    border: 1px solid var(--base-border-color);
+    border-radius: 3px;
+    overflow: hidden;
+
+    .watch-toolbar {
+      display: flex;
+      background-color: var(--tool-panel-background-color);
+      padding: 4px;
+      gap: 4px;
+
+      /* Standard styleguide buttons; let the theme own hover/active/disabled. */
+      .btn {
+        flex-shrink: 0;
+      }
+
+      /* Push the remove button to the trailing edge of the toolbar. */
+      .watch-remove-btn {
+        margin-left: auto;
+      }
+    }
+
+    .watch-editor-container {
+      padding: calc(var(--component-padding) / 2);
+
+      /* Bordered, rounded input that accents on focus. */
+      .watch-input {
+        padding: calc(var(--component-padding) / 2);
+        font-size: var(--font-size);
+        min-height: 2.5em;
+        max-height: 10em;
+        overflow-y: auto;
+        border: 1px solid var(--base-border-color);
+        border-radius: var(--component-border-radius);
+        background-color: var(--syntax-background-color);
+        transition: border-color 0.15s ease;
+
+        &.is-focused {
+          border-color: var(--text-color-info);
+        }
+
+        .cursor-line {
+          background: transparent;
+        }
+      }
+    }
+
+    .history .multiline-container {
+      border-right: 0;
+      border-bottom: 0;
+      border-left: 0;
+    }
+  }
+
+  .btn-group {
+    margin-top: 10px;
+    display: block;
+
+    .btn {
+      width: 100%;
+    }
+  }
+}
+
+/* Completion images inside the watch editor's suggestion list. */
+.jupyter-watches .autocomplete-suggestion-list img {
+  display: inline;
+  background-color: transparent;
+}

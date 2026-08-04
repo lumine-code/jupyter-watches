@@ -1,0 +1,10 @@
+{
+  "atom-workspace": {
+    "alt-h w": "jupyter-watches:toggle"
+  },
+
+  "atom-workspace atom-text-editor.watch-input:not([mini])": {
+    "enter": "core:confirm",
+    "shift-enter": "editor:newline"
+  }
+}

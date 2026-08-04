@@ -1,0 +1,16 @@
+{
+  "menu": [
+    {
+      "label": "Packages",
+      "submenu": [
+        {
+          "label": "Jupyter Watches",
+          "submenu": [
+            { "label": "Toggle Watches", "command": "jupyter-watches:toggle" },
+            { "label": "Watch Selection", "command": "jupyter-watches:add" }
+          ]
+        }
+      ]
+    }
+  ]
+}
