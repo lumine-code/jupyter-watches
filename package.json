@@ -24,6 +24,13 @@
     "You can watch the selected expression re-evaluate after every run with {{ 'jupyter-watches:add' | keystroke }}"
   ],
   "main": "./lib/main",
+  "files": [
+    "keymaps",
+    "lib",
+    "menus",
+    "spec",
+    "styles"
+  ],
   "activationCommands": {
     "atom-workspace": [
       "jupyter-watches:toggle"
