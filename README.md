@@ -36,9 +36,9 @@ A new watch starts paused; Enter in its editor starts it. The run button re-eval
 
 ## Customization
 
-Paste this into your `styles.less` to give each watch more vertical room:
+Paste this into your `styles.css` to give each watch more vertical room:
 
-```less
+```css
 .jupyter-watches {
   .multiline-container {
     max-height: 700px;
