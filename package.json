@@ -33,7 +33,8 @@
   ],
   "activationCommands": {
     "atom-workspace": [
-      "jupyter-watches:toggle"
+      "jupyter-watches:toggle",
+      "jupyter-watches:toggle-focus"
     ],
     "atom-text-editor:not([mini])": [
       "jupyter-watches:add",
