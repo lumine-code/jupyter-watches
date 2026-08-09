@@ -1,6 +1,6 @@
 /** @jsx etch.dom */
 const etch = require("@lumine-code/etch");
-const { CompositeDisposable } = require("atom");
+const { CompositeDisposable } = require("lumine");
 const Watch = require("./watch");
 
 const WATCHES_URI = "lumine://jupyter-watches";
@@ -52,8 +52,8 @@ class Watches {
     if (!watchesStore) {
       // Unless asked to stay, the view closes itself rather than sitting there
       // empty; the hide is deferred so it does not run inside a render.
-      if (!atom.config.get("jupyter-watches.keepOpen")) {
-        etch.getScheduler().updateDocument(() => atom.workspace.hide(WATCHES_URI));
+      if (!lumine.config.get("jupyter-watches.keepOpen")) {
+        etch.getScheduler().updateDocument(() => lumine.workspace.hide(WATCHES_URI));
       }
       return (
         <div className="sidebar watch-sidebar">

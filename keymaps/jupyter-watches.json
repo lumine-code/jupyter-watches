@@ -1,9 +1,9 @@
 {
-  "atom-workspace": {
+  "lumine-workspace": {
     "alt-j w": "jupyter-watches:toggle-focus"
   },
 
-  "atom-workspace atom-text-editor.watch-input:not([mini])": {
+  "lumine-workspace lumine-text-editor.watch-input:not([mini])": {
     "enter": "core:confirm",
     "shift-enter": "editor:newline"
   }

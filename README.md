@@ -21,13 +21,13 @@ It reads its kernels from [`jupyter-repl`](https://github.com/lumine-code/jupyte
 
 ## Commands
 
-Commands available in `atom-workspace`:
+Commands available in `lumine-workspace`:
 
 - `jupyter-watches:toggle`: open the panel, or close it when it is open,
 - `jupyter-watches:toggle-focus`: focus the panel, or return focus to the editor when it already has it,
 - `jupyter-watches:add`: watch the selected expression, or add an empty watch to type into.
 
-Commands available in `atom-text-editor:not([mini])`:
+Commands available in `lumine-text-editor:not([mini])`:
 
 - `jupyter-watches:remove`: remove the watch whose editor has the cursor.
 

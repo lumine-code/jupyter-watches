@@ -32,11 +32,11 @@
     "styles"
   ],
   "activationCommands": {
-    "atom-workspace": [
+    "lumine-workspace": [
       "jupyter-watches:toggle",
       "jupyter-watches:toggle-focus"
     ],
-    "atom-text-editor:not([mini])": [
+    "lumine-text-editor:not([mini])": [
       "jupyter-watches:add",
       "jupyter-watches:remove"
     ]

@@ -1,5 +1,5 @@
 const etch = require("@lumine-code/etch");
-const { Emitter } = require("atom");
+const { Emitter } = require("lumine");
 const { WatchStore } = require("../lib/watch-store");
 const WatchesStore = require("../lib/watches-store");
 const WatchesSession = require("../lib/watches-session");
@@ -299,11 +299,11 @@ describe("watches panel", () => {
     const watch = session.storeFor().createWatch();
     flush(component);
 
-    const attached = component.element.querySelector(".watch-editor-container atom-text-editor");
+    const attached = component.element.querySelector(".watch-editor-container lumine-text-editor");
     expect(attached).toBe(watch.editor.element);
 
     flush(component);
-    expect(component.element.querySelector(".watch-editor-container atom-text-editor")).toBe(
+    expect(component.element.querySelector(".watch-editor-container lumine-text-editor")).toBe(
       watch.editor.element,
     );
   });
@@ -315,7 +315,7 @@ describe("watches pane teardown", () => {
   it("leaves no tab behind when destroyed directly", () => {
     const session = new WatchesSession();
     const item = new WatchesPane(session);
-    const pane = atom.workspace.getCenter().getActivePane();
+    const pane = lumine.workspace.getCenter().getActivePane();
     pane.addItem(item);
 
     expect(pane.getItems()).toContain(item);
