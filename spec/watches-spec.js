@@ -65,6 +65,9 @@ class FakeOutputStore {
     this.runs++;
   }
   appendOutput(message) {
+    // Mirrors the real store: a status message updates lifecycle state but
+    // never becomes an output entry.
+    if (message.output_type === "status") return;
     this.outputs.push(message);
     this.emitter.emit("did-update");
   }
@@ -126,15 +129,32 @@ describe("watch store", () => {
     watch.setCode("df.shape");
     watch.toggleWatching();
     kernel.lastOnResults({ output_type: "stream", name: "stdout", text: "(3, 2)" });
+    kernel.lastOnResults({ output_type: "status", execution_state: "idle" });
 
     expect(watch.outputStore.runs).toBe(1);
     expect(watch.outputStore.outputs.length).toBe(1);
 
     watch.run();
     kernel.lastOnResults({ output_type: "stream", name: "stdout", text: "(4, 2)" });
+    kernel.lastOnResults({ output_type: "status", execution_state: "idle" });
 
     expect(watch.outputStore.runs).toBe(2);
     expect(watch.outputStore.outputs.length).toBe(2);
+  });
+
+  it("drops a re-run while the previous one is still outstanding", () => {
+    // The idle signal is kernel-wide, so a chatty client can ask for re-runs
+    // faster than the expression evaluates. Only one may be in flight; the
+    // next idle after completion runs again.
+    watch.setCode("df.shape");
+    watch.toggleWatching();
+
+    watch.run();
+    expect(kernel.executed).toEqual(["df.shape"]);
+
+    kernel.lastOnResults({ output_type: "status", execution_state: "idle" });
+    watch.run();
+    expect(kernel.executed).toEqual(["df.shape", "df.shape"]);
   });
 
   it("owns a real editor carrying the kernel's grammar class", () => {
@@ -165,6 +185,8 @@ describe("watches store", () => {
     const watching = store.createWatch();
     watching.setCode("a");
     watching.toggleWatching();
+    // Complete the run toggleWatching started, as a real kernel would.
+    kernel.lastOnResults({ output_type: "status", execution_state: "idle" });
 
     const paused = store.createWatch();
     paused.setCode("b");
