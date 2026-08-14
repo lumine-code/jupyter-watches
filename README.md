@@ -15,7 +15,7 @@ A watch is an expression the kernel runs again every time it finishes running an
 
 ## Installation
 
-To install `jupyter-watches` search for _jupyter-watches_ in the Install pane of the Lumine settings or run `lumine --install lumine-code/jupyter-watches`.
+To install `jupyter-watches` search for it in the Install pane of the Lumine settings, or run the command `lumine --install lumine-code/jupyter-watches`.
 
 It reads its kernels from [`jupyter-repl`](https://github.com/lumine-code/jupyter-repl), which needs to be installed too.
 
@@ -49,9 +49,9 @@ Paste this into your `styles.css` to give each watch more vertical room:
 
 ## Services
 
-- **jupyter.kernel** (`^1.0.0`): consumed to follow the active kernel, run watch expressions, and re-run them when it falls idle.
-- **jupyter.output** (`^1.0.0`): consumed to record results and render them with jupyter-repl's renderers.
-- **autocomplete.watch-editor** (`^1.0.0`): consumed to offer completions in the watch editors.
+- `jupyter.kernel`: consumed to follow the active kernel, run watch expressions, and re-run them when it falls idle.
+- `jupyter.output`: consumed to record results and render them with jupyter-repl's renderers.
+- `autocomplete.watch-editor`: consumed to offer completions in the watch editors.
 
 ## Contributing
 
