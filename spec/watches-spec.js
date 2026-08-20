@@ -157,6 +157,24 @@ describe("watch store", () => {
     expect(kernel.executed).toEqual(["df.shape", "df.shape"]);
   });
 
+  it("releases a run the kernel answers with an error", () => {
+    // A restart or a dead process settles an outstanding watch with an error
+    // output; the next idle must run again rather than stay latched.
+    watch.setCode("df.shape");
+    watch.toggleWatching();
+    expect(kernel.executed).toEqual(["df.shape"]);
+
+    kernel.lastOnResults({
+      output_type: "error",
+      ename: "ExecutionAborted",
+      evalue: "Kernel restarted",
+      traceback: [],
+    });
+    watch.run();
+
+    expect(kernel.executed).toEqual(["df.shape", "df.shape"]);
+  });
+
   it("owns a real editor carrying the kernel's grammar class", () => {
     expect(watch.editor.element.classList.contains("watch-input")).toBe(true);
 
