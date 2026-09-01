@@ -67,7 +67,7 @@
 
       .input-range {
         width: 100%;
-        cursor: pointer;
+        cursor: default;
 
         &::-webkit-slider-thumb {
           -webkit-appearance: none;
