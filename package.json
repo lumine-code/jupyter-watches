@@ -23,6 +23,9 @@
   "backgroundTips": [
     "You can watch the selected expression re-evaluate after every run with {{ 'jupyter-watches:add' | keystroke }}"
   ],
+  "deserializers": {
+    "jupyter-watches/WatchesPane": "deserializeWatchesPane"
+  },
   "main": "./lib/main",
   "files": [
     "keymaps",
