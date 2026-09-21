@@ -34,16 +34,6 @@
     "spec",
     "styles"
   ],
-  "activationCommands": {
-    "lumine-workspace": [
-      "jupyter-watches:toggle",
-      "jupyter-watches:toggle-focus"
-    ],
-    "lumine-text-editor:not([mini])": [
-      "jupyter-watches:add",
-      "jupyter-watches:remove"
-    ]
-  },
   "configSchema": {
     "keepOpen": {
       "title": "Leave panel open",

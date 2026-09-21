@@ -48,7 +48,7 @@ describe("restoring the Watches pane", () => {
       main.deactivate();
     }
     if (loadedPackage && lumine.packages.isPackageLoaded(loadedPackage.name)) {
-      lumine.packages.unloadPackage(loadedPackage.name);
+      await lumine.packages.unloadPackage(loadedPackage.name);
     }
     loadedPackage = null;
   });
