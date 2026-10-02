@@ -183,6 +183,37 @@ describe("watch store", () => {
     watch = null;
     expect(editor.isDestroyed()).toBe(true);
   });
+
+  it("drops output that arrives after its watch is destroyed", () => {
+    watch.setCode("value");
+    watch.toggleWatching();
+    const deliver = kernel.lastOnResults;
+    watch.destroy();
+    deliver({ output_type: "stream", name: "stdout", text: "late value" });
+    expect(watch.outputStore.outputs).toEqual([]);
+  });
+
+  it("drops an earlier request's late output after a new run starts", () => {
+    watch.setCode("value");
+    watch.toggleWatching();
+    const earlier = kernel.lastOnResults;
+    earlier({ output_type: "error", ename: "KernelGone", evalue: "Restarting" });
+    watch.run();
+    const count = watch.outputStore.outputs.length;
+    earlier({ output_type: "stream", name: "stdout", text: "late value" });
+    expect(watch.outputStore.outputs.length).toBe(count);
+    expect(watch._running).toBe(true);
+  });
+
+  it("settles a run whose kernel wrapper throws synchronously", () => {
+    kernel.executeWatch = () => {
+      throw new Error("Kernel restarted");
+    };
+    watch.setCode("value");
+    expect(() => watch.toggleWatching()).not.toThrow();
+    expect(watch._running).toBe(false);
+    expect(watch.outputStore.outputs[0].evalue).toBe("Kernel restarted");
+  });
 });
 
 describe("watches store", () => {
@@ -293,6 +324,28 @@ describe("watches session", () => {
 
     expect(session.kernel).toBe(null);
     expect(kernel.idleCallbacks.length).toBe(0);
+  });
+
+  it("releases old stores, editors and idle hooks when its provider detaches", () => {
+    const kernel = fakeKernel();
+    session.setProvider(fakeProvider(kernel));
+    const store = session.storeFor();
+    const editor = store.createWatch().editor;
+    session.setProvider(null);
+    expect(session.stores.size).toBe(0);
+    expect(editor.isDestroyed()).toBe(true);
+    expect(kernel.idleCallbacks.length).toBe(0);
+  });
+
+  it("replaces stores that belong to another output service generation", () => {
+    const kernel = fakeKernel();
+    session.setProvider(fakeProvider(kernel));
+    const previous = session.storeFor();
+    const editor = previous.createWatch().editor;
+    session.setOutputService(fakeOutputService());
+    expect(editor.isDestroyed()).toBe(true);
+    expect(session.storeFor()).not.toBe(previous);
+    expect(kernel.idleCallbacks.length).toBe(1);
   });
 });
 
