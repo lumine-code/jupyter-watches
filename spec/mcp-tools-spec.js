@@ -1,6 +1,6 @@
-const { recordRequest, settle } = require("./request-fixture");
+const { recordRequest, settle, createOutputAccumulator } = require("./request-fixture");
 const path = require("path");
-const { Disposable, Emitter } = require("lumine");
+const { Disposable } = require("lumine");
 function kernel(id) {
   const requests = [];
   return {
@@ -31,29 +31,9 @@ function provider(kernels) {
   };
 }
 function outputService() {
-  return {
-    OutputStore: class {
-      constructor(maxOutputs) {
-        this.outputs = [];
-        this.maxOutputs = maxOutputs;
-        this.emitter = new Emitter();
-      }
-      onDidUpdate(callback) {
-        return this.emitter.on("did-update", callback);
-      }
-      startNewRun() {}
-      appendOutput(output) {
-        if (["stream", "display_data", "execute_result", "error"].includes(output.output_type)) {
-          this.outputs.push(output);
-          this.outputs = this.outputs.slice(-this.maxOutputs);
-        }
-      }
-      clear() {
-        this.outputs = [];
-      }
-    },
-  };
+  return { createOutputAccumulator };
 }
+
 describe("cached watch MCP tools", () => {
   let session;
   let kernels;

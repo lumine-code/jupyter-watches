@@ -38,7 +38,7 @@ function recordRequest(kernel, specification) {
     receive(output) {
       if (finished || handle.disposed) return;
       if (output.output_type === "error") {
-        outputs.push(output);
+        if (specification.collectOutputs !== false) outputs.push(output);
         for (const callback of listeners) callback(output);
         handle.finish({ status: "error", error: output });
       } else if (output.output_type === "status") {
@@ -48,7 +48,7 @@ function recordRequest(kernel, specification) {
         reply = true;
         if (specification.purpose !== "user" || idle) handle.finish({ status: output.data });
       } else {
-        outputs.push(output);
+        if (specification.collectOutputs !== false) outputs.push(output);
         for (const callback of listeners) callback(output);
       }
     },
@@ -89,4 +89,62 @@ function generationKernel(kernel) {
   };
   return kernel;
 }
-module.exports = { recordRequest, settle, generationKernel };
+// A pure test value with persistent stream cursor and clear/update state.
+// It never refers to the rendering provider that supplied its factory.
+function createOutputAccumulator() {
+  const outputs = [];
+  const streamStates = new WeakMap();
+  let clearPending = false;
+  return {
+    outputs,
+    append(event) {
+      const output = structuredClone(event);
+      if (output.output_type === "clear_output") {
+        clearPending = Boolean(output.wait);
+        if (!clearPending) outputs.length = 0;
+        return;
+      }
+      if (output.output_type === "update_display_data") {
+        for (const previous of outputs) {
+          if (
+            output.transient?.display_id &&
+            previous.transient?.display_id === output.transient.display_id
+          ) {
+            previous.data = output.data;
+            previous.metadata = output.metadata;
+          }
+        }
+        return;
+      }
+      if (clearPending) {
+        outputs.length = 0;
+        clearPending = false;
+      }
+      if (output.output_type !== "stream") {
+        outputs.push(output);
+        return;
+      }
+      const previous = outputs.at(-1);
+      const target =
+        previous?.output_type === "stream" && previous.name === output.name ? previous : output;
+      if (target === output) outputs.push(target);
+      let state = streamStates.get(target);
+      if (!state) {
+        state = { lines: [[]], row: 0, column: 0 };
+        streamStates.set(target, state);
+      }
+      for (const char of Array.isArray(output.text) ? output.text.join("") : output.text || "") {
+        if (char === "\r") state.column = 0;
+        else if (char === "\n") {
+          state.row++;
+          state.column = 0;
+          state.lines[state.row] ||= [];
+        } else {
+          state.lines[state.row][state.column++] = char;
+        }
+      }
+      target.text = state.lines.map((line) => line.join("")).join("\n");
+    },
+  };
+}
+module.exports = { recordRequest, settle, generationKernel, createOutputAccumulator };

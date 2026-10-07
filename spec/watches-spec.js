@@ -1,4 +1,4 @@
-const { recordRequest, settle } = require("./request-fixture");
+const { recordRequest, settle, createOutputAccumulator } = require("./request-fixture");
 const etch = require("@lumine-code/etch");
 const { WatchStore } = require("../lib/watch-store");
 const WatchesStore = require("../lib/watches-store");
@@ -60,7 +60,7 @@ function fakeProvider(kernel = null) {
 }
 function fakeOutputService() {
   return {
-    reduceOutputEvents: (outputs) => outputs,
+    createOutputAccumulator,
     normalizeOutput: (output) => output,
     renderDisplay: (output) =>
       etch.dom("pre", {}, output.text || output.data?.["text/plain"] || ""),
@@ -71,7 +71,7 @@ describe("watch store", () => {
   let watch;
   beforeEach(() => {
     kernel = fakeKernel();
-    watch = new WatchStore(kernel, fakeOutputService());
+    watch = new WatchStore(kernel, createOutputAccumulator);
   });
   afterEach(() => {
     watch?.destroy();
@@ -226,7 +226,7 @@ describe("watches store", () => {
   let store;
   beforeEach(() => {
     kernel = fakeKernel();
-    store = new WatchesStore(kernel, fakeOutputService());
+    store = new WatchesStore(kernel, createOutputAccumulator);
   });
   afterEach(() => {
     store?.destroy();
@@ -334,7 +334,7 @@ describe("watches session", () => {
     expect(watch.destroyed).toBe(true);
     expect(kernel.idleCallbacks.length).toBe(0);
   });
-  it("preserves expressions and raw history across renderer removal and replacement", async () => {
+  it("preserves expressions and owned history across renderer removal and replacement", async () => {
     const kernel = fakeKernel();
     session.setProvider(fakeProvider(kernel));
     const original = session.storeFor();

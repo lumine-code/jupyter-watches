@@ -1,3 +1,4 @@
+const { createOutputAccumulator } = require("./request-fixture");
 const path = require("path");
 const manifest = require("../package.json");
 let main;
@@ -38,8 +39,7 @@ function fakeProvider(kernel) {
 }
 function fakeOutputService() {
   return {
-    OutputStore: class {},
-    History: class {},
+    createOutputAccumulator,
   };
 }
 

@@ -60,7 +60,7 @@ Paste this into your `styles.css` to give each watch more vertical room:
 
 - `jupyter.context`: consumed to resolve the command's editor and expression.
 - `jupyter.kernel`: consumed to follow the active kernel, run watch expressions, and re-run them when it falls idle.
-- `jupyter.output`: consumed to render retained watch outputs; expressions and history remain available without it.
+- `jupyter.output`: consumed to create owned output accumulators and render retained watch outputs; expressions and history remain available without it.
 - `autocomplete.watch-editor`: consumed to offer completions in the watch editors.
 - `mcp.tools`: provides `ListJupyterWatches` and `GetJupyterWatch` as bounded, read-only cache queries.
 

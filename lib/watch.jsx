@@ -73,24 +73,7 @@ class Watch {
 
   render() {
     const history = this.store.outputStore;
-    const raw = history.history[history.index] || [];
-    const outputs = this.outputService ? this.outputService.reduceOutputEvents(raw) : [];
-    if (!this.outputService) {
-      let clearOnNext = false;
-      for (const record of raw) {
-        if (record.output_type === "clear_output") {
-          if (record.wait) clearOnNext = true;
-          else outputs.length = 0;
-          continue;
-        }
-        if (record.output_type === "update_display_data") continue;
-        if (clearOnNext) {
-          outputs.length = 0;
-          clearOnNext = false;
-        }
-        outputs.push(record);
-      }
-    }
+    const outputs = history.history[history.index] || [];
 
     return (
       <div className="watch-view">

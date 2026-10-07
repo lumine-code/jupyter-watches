@@ -1,3 +1,4 @@
+const { createOutputAccumulator } = require("./request-fixture");
 const { Disposable } = require("lumine");
 
 describe("watches service replacement", () => {
@@ -32,8 +33,8 @@ describe("watches service replacement", () => {
 
   it("keeps the newer output service when the old one detaches", () => {
     const pane = main.deserializeWatchesPane();
-    const original = main.consumeJupyterOutput({});
-    const next = {};
+    const original = main.consumeJupyterOutput({ createOutputAccumulator });
+    const next = { createOutputAccumulator };
     const replacement = main.consumeJupyterOutput(next);
     original.dispose();
     expect(pane.destroyed).not.toBe(true);
