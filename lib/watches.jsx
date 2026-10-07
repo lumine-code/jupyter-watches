@@ -66,9 +66,10 @@ class Watches {
       <div className="sidebar watch-sidebar">
         {watchesStore.watches.map((watch) => (
           <Watch
-            key={watch.editor.id}
+            key={watch.id}
             store={watch}
             outputService={this.session.outputService}
+            registerEditor={(editor) => watchesStore.registerEditor(watch, editor)}
             onRemove={this.handleRemoveWatch}
           />
         ))}
@@ -91,7 +92,7 @@ class Watches {
   destroy() {
     this.watchesSubscription?.dispose();
     this.disposables.dispose();
-    return etch.destroy(this);
+    return etch.destroySync(this);
   }
 }
 

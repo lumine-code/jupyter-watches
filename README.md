@@ -7,7 +7,7 @@ A watch is an expression the kernel runs again every time it finishes running an
 ## Features
 
 - **Re-runs on idle**: every watch re-evaluates when the kernel finishes an execution, wherever it came from.
-- **Value history**: each watch keeps its last 25 values, scrubbable with a slider.
+- **Value history**: each watch keeps its last 25 runs, scrubbable with a slider.
 - **Rich values**: watches render through jupyter-repl's renderers — plots, dataframes, LaTeX, images, not just text.
 - **Real editors**: a watch expression is a real editor with the kernel's grammar and, with `autocomplete-plus`, its completions.
 - **Watch the selection**: select an expression in any editor and turn it into a watch without retyping it.
@@ -58,10 +58,13 @@ Paste this into your `styles.css` to give each watch more vertical room:
 
 ## Services
 
+- `jupyter.context`: consumed to resolve the command's editor and expression.
 - `jupyter.kernel`: consumed to follow the active kernel, run watch expressions, and re-run them when it falls idle.
-- `jupyter.output`: consumed to record results and render them with jupyter-repl's renderers.
+- `jupyter.output`: consumed to render retained watch outputs; expressions and history remain available without it.
 - `autocomplete.watch-editor`: consumed to offer completions in the watch editors.
 - `mcp.tools`: provides `ListJupyterWatches` and `GetJupyterWatch` as bounded, read-only cache queries.
+
+- `background-tips.provider`: provided to teach the package's headline action in an empty workspace.
 
 ## Contributing
 

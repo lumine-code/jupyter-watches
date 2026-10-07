@@ -72,6 +72,11 @@
       "versions": {
         "^1.0.0": "consumeAutocompleteWatchEditor"
       }
+    },
+    "jupyter.context": {
+      "versions": {
+        "^1.0.0": "consumeJupyterContext"
+      }
     }
   },
   "dependencies": {

@@ -1,6 +1,6 @@
+const { recordRequest, settle } = require("./request-fixture");
 const path = require("path");
 const { Disposable, Emitter } = require("lumine");
-
 function kernel(id) {
   const requests = [];
   return {
@@ -12,14 +12,17 @@ function kernel(id) {
     executionCount: 3,
     lastExecutionTime: "2026-10-02T10:00:00.000Z",
     requests,
-    executeWatch: jasmine
-      .createSpy("executeWatch")
-      .and.callFake((code, receive) => requests.push({ code, receive })),
+    request: jasmine.createSpy("request").and.callFake(function (specification) {
+      return recordRequest(this, specification);
+    }),
     inspect: jasmine.createSpy("inspect"),
     onDidBecomeIdle: jasmine.createSpy("idle subscription").and.callFake(() => new Disposable()),
+    generation: 0,
+    onDidChangeGeneration: () => ({
+      dispose() {},
+    }),
   };
 }
-
 function provider(kernels) {
   return {
     getActiveKernel: () => kernels[0],
@@ -28,7 +31,6 @@ function provider(kernels) {
     onDidRemoveKernel: () => new Disposable(),
   };
 }
-
 function outputService() {
   return {
     OutputStore: class {
@@ -53,13 +55,11 @@ function outputService() {
     },
   };
 }
-
 describe("cached watch MCP tools", () => {
   let session;
   let kernels;
   let tools;
   let maxBytes;
-
   beforeEach(() => {
     const WatchesSession = require("../lib/watches-session");
     const { createTools, MAX_RESPONSE_BYTES } = require("../lib/mcp-tools");
@@ -71,59 +71,76 @@ describe("cached watch MCP tools", () => {
     maxBytes = MAX_RESPONSE_BYTES;
   });
   afterEach(() => session.destroy());
-
   function add(source = kernels[1], code = "value") {
     const watch = session.storeFor(source).createWatch();
     watch.setCode(code);
     return watch;
   }
-
   function evaluate(watch, source, output) {
     if (!watch.isWatching) watch.toggleWatching();
     else watch.run();
     const request = source.requests[source.requests.length - 1];
     if (output) request.receive(output);
-    request.receive({ output_type: "status", execution_state: "idle" });
+    request.receive({
+      output_type: "status",
+      execution_state: "idle",
+    });
   }
-
-  it("requires explicit IDs and does not create stores, evaluate expressions or add idle listeners", () => {
+  it("requires explicit IDs and does not create stores, evaluate expressions or add idle listeners", async () => {
     expect(() => tools.ListJupyterWatches.execute({})).toThrowError(/kernelId/);
-    expect(tools.ListJupyterWatches.execute({ kernelId: "second" }).status).toBe(
-      "cache-unavailable",
-    );
-    expect(tools.ListJupyterWatches.execute({ kernelId: "absent" }).status).toBe(
-      "kernel-not-found",
-    );
+    expect(
+      tools.ListJupyterWatches.execute({
+        kernelId: "second",
+      }).status,
+    ).toBe("cache-unavailable");
+    expect(
+      tools.ListJupyterWatches.execute({
+        kernelId: "absent",
+      }).status,
+    ).toBe("kernel-not-found");
     expect(session.stores.size).toBe(0);
-    expect(kernels[1].executeWatch).not.toHaveBeenCalled();
+    expect(kernels[1].request).not.toHaveBeenCalled();
     expect(kernels[1].inspect).not.toHaveBeenCalled();
     expect(kernels[1].onDidBecomeIdle).not.toHaveBeenCalled();
     expect(tools.GetJupyterWatch.annotations.readOnlyHint).toBe(true);
   });
-
-  it("gives paused watches stable IDs and does not run their expressions when read", () => {
+  it("gives paused watches stable IDs and does not run their expressions when read", async () => {
     add(kernels[0], "wrong");
+    await settle();
     const watch = add(kernels[1], "dangerous_side_effect()");
-    const first = tools.ListJupyterWatches.execute({ kernelId: "second" });
+    const first = tools.ListJupyterWatches.execute({
+      kernelId: "second",
+    });
     expect(first.watches.length).toBe(1);
     expect(first.watches[0].watchId).toBe(watch.id);
     expect(first.watches[0].availability).toBe("no-output");
     expect(first.watches[0].stale).toBe(null);
-    const result = tools.GetJupyterWatch.execute({ kernelId: "second", watchId: watch.id });
+    const result = tools.GetJupyterWatch.execute({
+      kernelId: "second",
+      watchId: watch.id,
+    });
     expect(result.watch.watchId).toBe(first.watches[0].watchId);
     expect(result.watch.expression).toBe("dangerous_side_effect()");
     expect(result.watch.isWatching).toBe(false);
-    expect(kernels[1].executeWatch).not.toHaveBeenCalled();
+    expect(kernels[1].request).not.toHaveBeenCalled();
     expect(kernels[1].inspect).not.toHaveBeenCalled();
   });
-
-  it("returns detached plain snapshots, timestamps and bounded output-entry history", () => {
+  it("returns detached plain snapshots, timestamps and bounded output-entry history", async () => {
     const watch = add();
     evaluate(watch, kernels[1], {
       output_type: "execute_result",
-      data: { "text/plain": "3", "image/png": "binary".repeat(100000) },
+      data: {
+        "text/plain": "3",
+        "image/png": "binary".repeat(100000),
+      },
     });
-    evaluate(watch, kernels[1], { output_type: "stream", name: "stdout", text: "latest" });
+    await settle();
+    evaluate(watch, kernels[1], {
+      output_type: "stream",
+      name: "stdout",
+      text: "latest",
+    });
+    await settle();
     const result = tools.GetJupyterWatch.execute({
       kernelId: "second",
       watchId: watch.id,
@@ -148,37 +165,54 @@ describe("cached watch MCP tools", () => {
     expect(JSON.stringify(all)).not.toContain("binarybinary");
     expect(all.history[0].richDataOmitted).toBe(true);
   });
-
-  it("marks edited, running, changed-kernel and no-new-output snapshots stale", () => {
+  it("marks edited, running, changed-kernel and no-new-output snapshots stale", async () => {
     const watch = add();
-    evaluate(watch, kernels[1], { output_type: "stream", name: "stdout", text: "3" });
+    evaluate(watch, kernels[1], {
+      output_type: "stream",
+      name: "stdout",
+      text: "3",
+    });
+    await settle();
     const read = () =>
-      tools.GetJupyterWatch.execute({ kernelId: "second", watchId: watch.id }).watch;
+      tools.GetJupyterWatch.execute({
+        kernelId: "second",
+        watchId: watch.id,
+      }).watch;
     watch.setCode("other");
+    await settle();
     expect(read().stale).toBe(true);
     expect(read().evaluatedExpression).toBe("value");
     watch.setCode("value");
+    await settle();
     watch.run();
+    await settle();
     expect(read().stale).toBe(true);
     kernels[1].requests[kernels[1].requests.length - 1].receive({
       output_type: "status",
       execution_state: "idle",
     });
+    await settle();
     expect(read().stale).toBe(true);
-    evaluate(watch, kernels[1], { output_type: "stream", name: "stdout", text: "4" });
+    evaluate(watch, kernels[1], {
+      output_type: "stream",
+      name: "stdout",
+      text: "4",
+    });
+    await settle();
     kernels[1].executionCount++;
     expect(read().stale).toBe(true);
   });
-
-  it("bounds the whole response even for escaped text, Unicode and multiple histories", () => {
+  it("bounds the whole response even for escaped text, Unicode and multiple histories", async () => {
     for (let index = 0; index < 30; index++) {
       const watch = add(kernels[1], `value${index}`);
-      for (let run = 0; run < 25; run++)
+      for (let run = 0; run < 25; run++) {
         evaluate(watch, kernels[1], {
           output_type: "stream",
           name: "stdout",
           text: "\0🦉".repeat(8000),
         });
+        await settle();
+      }
     }
     const list = tools.ListJupyterWatches.execute({
       kernelId: "second",
@@ -196,38 +230,52 @@ describe("cached watch MCP tools", () => {
     });
     expect(Buffer.byteLength(JSON.stringify(result), "utf8")).toBeLessThanOrEqual(maxBytes);
     expect(() =>
-      tools.GetJupyterWatch.execute({ kernelId: "second", watchId: "w", historyLimit: 26 }),
+      tools.GetJupyterWatch.execute({
+        kernelId: "second",
+        watchId: "w",
+        historyLimit: 26,
+      }),
     ).toThrowError(/historyLimit/);
   });
-
-  it("reports missing output providers, removed watches and disconnected kernels", () => {
+  it("reports missing output providers, removed watches and disconnected kernels", async () => {
     const watch = add();
     session.stores.get(kernels[1]).removeWatchByRef(watch);
-    expect(tools.GetJupyterWatch.execute({ kernelId: "second", watchId: watch.id }).status).toBe(
-      "not-found",
-    );
+    await settle();
+    expect(
+      tools.GetJupyterWatch.execute({
+        kernelId: "second",
+        watchId: watch.id,
+      }).status,
+    ).toBe("not-found");
     session.setOutputService(null);
-    expect(tools.ListJupyterWatches.execute({ kernelId: "second" }).status).toBe(
-      "output-unavailable",
-    );
+    await settle();
+    expect(
+      tools.ListJupyterWatches.execute({
+        kernelId: "second",
+      }).status,
+    ).toBe("available");
     session.setOutputService(outputService());
-    expect(tools.ListJupyterWatches.execute({ kernelId: "second" }).status).toBe(
-      "cache-unavailable",
-    );
+    await settle();
+    expect(
+      tools.ListJupyterWatches.execute({
+        kernelId: "second",
+      }).status,
+    ).toBe("available");
     session.setProvider(null);
-    expect(tools.ListJupyterWatches.execute({ kernelId: "second" }).status).toBe(
-      "provider-unavailable",
-    );
+    await settle();
+    expect(
+      tools.ListJupyterWatches.execute({
+        kernelId: "second",
+      }).status,
+    ).toBe("provider-unavailable");
   });
 });
-
 describe("watch MCP service registration", () => {
   let pkg;
   let consumer;
   let kernelService;
   let outputs;
   const registered = new Map();
-
   afterEach(async () => {
     if (pkg && lumine.packages.isPackageActive(pkg.name))
       await lumine.packages.deactivatePackage(pkg.name);
@@ -239,7 +287,6 @@ describe("watch MCP service registration", () => {
     pkg = consumer = kernelService = outputs = null;
     registered.clear();
   });
-
   it("unregisters and republishes tools while keeping inactive panels passive", async () => {
     consumer = lumine.packages.serviceHub.consume("mcp.tools", "^1.0.0", (tools) => {
       const own = tools.filter((tool) =>
@@ -263,15 +310,28 @@ describe("watch MCP service registration", () => {
     const main = pkg.mainModule;
     const tool = registered.get("ListJupyterWatches");
     expect(tool).toBeDefined();
-    expect(tool.execute({ kernelId: source.id }).status).toBe("cache-unavailable");
+    expect(
+      tool.execute({
+        kernelId: source.id,
+      }).status,
+    ).toBe("cache-unavailable");
     expect(main.getSession().stores.size).toBe(0);
-    expect(source.executeWatch).not.toHaveBeenCalled();
+    expect(source.request).not.toHaveBeenCalled();
     expect(source.onDidBecomeIdle).not.toHaveBeenCalled();
     kernelService.dispose();
-    expect(tool.execute({ kernelId: source.id }).status).toBe("provider-unavailable");
+    await settle();
+    expect(
+      tool.execute({
+        kernelId: source.id,
+      }).status,
+    ).toBe("provider-unavailable");
     await lumine.packages.deactivatePackage(pkg.name);
     expect(registered.size).toBe(0);
-    expect(tool.execute({ kernelId: source.id }).status).toBe("provider-unavailable");
+    expect(
+      tool.execute({
+        kernelId: source.id,
+      }).status,
+    ).toBe("provider-unavailable");
     await lumine.packages.activatePackage(pkg.name);
     expect(registered.size).toBe(2);
   });

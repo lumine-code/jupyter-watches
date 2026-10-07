@@ -1,21 +1,52 @@
 /** @jsx etch.dom */
 const etch = require("@lumine-code/etch");
+const { CompositeDisposable } = require("lumine");
+const { autocompleteConsumer } = require("./autocomplete");
 
 /** One watch: its expression editor, its controls, and its value history. */
 class Watch {
-  constructor({ store, outputService, onRemove }) {
+  constructor({ store, outputService, onRemove, registerEditor }) {
     this.store = store;
     this.outputService = outputService;
     this.onRemove = onRemove;
     etch.initialize(this);
 
-    // The expression editor is a real TextEditor, so it is attached once and
-    // never re-created by a patch.
-    if (this.store.editor) {
-      this.refs.editorContainer.appendChild(this.store.editor.element);
-    }
-
-    this.subscription = this.store.onDidUpdate(() => etch.update(this));
+    this.editor = lumine.workspace.buildTextEditor({
+      softWrapped: true,
+      lineNumberGutterVisible: false,
+    });
+    this.editor.setText(store.getCode());
+    if (store.kernel.grammar)
+      lumine.grammars.assignLanguageMode(this.editor.getBuffer(), store.kernel.grammar.scopeName);
+    this.editor.element.classList.add("watch-input");
+    this.editor.element.setAttribute("input", "");
+    this.refs.editorContainer.appendChild(this.editor.element);
+    autocompleteConsumer.watchPanelEditor(this.editor);
+    const sync = () => {
+      if (this.editor.getText() !== store.getCode()) this.editor.setText(store.getCode());
+      if (store.focusRequested) {
+        store.focusRequested = false;
+        this.editor.element.focus();
+      }
+      etch.update(this);
+    };
+    this.blur = () => {
+      if (store.isWatching) store.run();
+    };
+    this.editor.element.addEventListener("blur", this.blur);
+    this.disposables = new CompositeDisposable(
+      store.onDidUpdate(sync),
+      store.outputStore.onDidUpdate(() => etch.update(this)),
+      this.editor.onDidChange(() => store.setCode(this.editor.getText())),
+      lumine.commands.add(this.editor.element, { "core:confirm": () => this.handleRun() }),
+      lumine.commands.add(this.refs.history, {
+        "core:move-left": () => store.outputStore.decrementIndex(),
+        "core:move-right": () => store.outputStore.incrementIndex(),
+      }),
+    );
+    const registration = registerEditor?.(this.editor);
+    if (registration) this.disposables.add(registration);
+    sync();
   }
 
   handleRun = () => {
@@ -41,7 +72,25 @@ class Watch {
   };
 
   render() {
-    const History = this.outputService.History;
+    const history = this.store.outputStore;
+    const raw = history.history[history.index] || [];
+    const outputs = this.outputService ? this.outputService.reduceOutputEvents(raw) : [];
+    if (!this.outputService) {
+      let clearOnNext = false;
+      for (const record of raw) {
+        if (record.output_type === "clear_output") {
+          if (record.wait) clearOnNext = true;
+          else outputs.length = 0;
+          continue;
+        }
+        if (record.output_type === "update_display_data") continue;
+        if (clearOnNext) {
+          outputs.length = 0;
+          clearOnNext = false;
+        }
+        outputs.push(record);
+      }
+    }
 
     return (
       <div className="watch-view">
@@ -70,27 +119,78 @@ class Watch {
           />
         </div>
         <div className="watch-editor-container" ref="editorContainer" />
-        <History store={this.store.outputStore} />
+        <div className="history output-area" ref="history">
+          {history.history.length > 0 ? (
+            <div className="slider">
+              <div className="current-output">
+                <button
+                  className="btn btn-xs icon icon-chevron-left"
+                  onClick={() => history.decrementIndex()}
+                  title="Previous run"
+                />
+                <span>
+                  {String(history.index + 1)}/{String(history.history.length)}
+                </span>
+                <button
+                  className="btn btn-xs icon icon-chevron-right"
+                  onClick={() => history.incrementIndex()}
+                  title="Next run"
+                />
+              </div>
+              <input
+                className="input-range"
+                type="range"
+                min="0"
+                max={String(history.history.length - 1)}
+                value={String(history.index)}
+                onChange={(event) => history.setIndex(Number(event.target.value))}
+              />
+            </div>
+          ) : null}
+          <div
+            className="multiline-container native-key-bindings"
+            tabIndex={-1}
+            style={{
+              fontSize: `${lumine.config.get("jupyter-repl.outputAreaFontSize") || lumine.config.get("editor.fontSize")}px`,
+            }}
+            attributes={{
+              "data-wrap-output": String(lumine.config.get("jupyter-repl.wrapOutput") ?? true),
+            }}
+          >
+            {outputs.map((output) =>
+              this.outputService ? (
+                this.outputService.renderDisplay(this.outputService.normalizeOutput(output), {
+                  kernel: this.store.kernel,
+                })
+              ) : (
+                <pre>
+                  {output.output_type === "stream"
+                    ? Array.isArray(output.text)
+                      ? output.text.join("")
+                      : output.text
+                    : output.output_type === "error"
+                      ? `${output.ename}: ${output.evalue}`
+                      : output.data?.["text/plain"] || "Rich output requires the Jupyter renderer."}
+                </pre>
+              ),
+            )}
+          </div>
+        </div>
       </div>
     );
   }
 
-  update({ store, onRemove }) {
+  update({ outputService, onRemove }) {
+    this.outputService = outputService;
     this.onRemove = onRemove;
-    if (store !== this.store) {
-      this.subscription.dispose();
-      this.store = store;
-      this.subscription = this.store.onDidUpdate(() => etch.update(this));
-    }
     return etch.update(this);
   }
 
   destroy() {
-    this.subscription.dispose();
-    // The editor belongs to the watch store, which destroys it; detach it so
-    // the patch does not take it down with this component.
-    this.store.editor?.element.remove();
-    return etch.destroy(this);
+    this.disposables.dispose();
+    this.editor.element.removeEventListener("blur", this.blur);
+    this.editor.destroy();
+    return etch.destroySync(this);
   }
 }
 

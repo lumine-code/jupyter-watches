@@ -1,10 +1,5 @@
-/*
- * The panel used to be nested inside `.jupyter-repl`; it is rooted on its own
- * pane element now. The value history and the outputs inside it are rendered
- * by jupyter-repl's `jupyter.output` components, so the `.history`,
- * `.multiline-container` and media rules mirror the ones that style those
- * components inside that package's own panes.
- */
+/* The panel owns its editors and history layout. Jupyter output content is
+   rendered through the shared service and inherits its canonical classes. */
 .jupyter-watches {
   height: 100%;
 

@@ -39,6 +39,7 @@ describe("watches service replacement", () => {
     expect(pane.destroyed).not.toBe(true);
     expect(main.getSession().outputService).toBe(next);
     replacement.dispose();
-    expect(pane.destroyed).toBe(true);
+    expect(pane.destroyed).not.toBe(true);
+    expect(main.getSession().outputService).toBeNull();
   });
 });
