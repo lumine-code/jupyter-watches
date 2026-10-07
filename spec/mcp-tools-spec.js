@@ -15,7 +15,6 @@ function kernel(id) {
     request: jasmine.createSpy("request").and.callFake(function (specification) {
       return recordRequest(this, specification);
     }),
-    inspect: jasmine.createSpy("inspect"),
     onDidBecomeIdle: jasmine.createSpy("idle subscription").and.callFake(() => new Disposable()),
     generation: 0,
     onDidChangeGeneration: () => ({
@@ -100,7 +99,6 @@ describe("cached watch MCP tools", () => {
     ).toBe("kernel-not-found");
     expect(session.stores.size).toBe(0);
     expect(kernels[1].request).not.toHaveBeenCalled();
-    expect(kernels[1].inspect).not.toHaveBeenCalled();
     expect(kernels[1].onDidBecomeIdle).not.toHaveBeenCalled();
     expect(tools.GetJupyterWatch.annotations.readOnlyHint).toBe(true);
   });
@@ -123,7 +121,6 @@ describe("cached watch MCP tools", () => {
     expect(result.watch.expression).toBe("dangerous_side_effect()");
     expect(result.watch.isWatching).toBe(false);
     expect(kernels[1].request).not.toHaveBeenCalled();
-    expect(kernels[1].inspect).not.toHaveBeenCalled();
   });
   it("returns detached plain snapshots, timestamps and bounded output-entry history", async () => {
     const watch = add();

@@ -44,7 +44,6 @@ function fakeProvider(kernel = null) {
   return {
     listeners,
     getActiveKernel: () => kernel,
-    getFocusedEditor: () => null,
     onDidChangeKernel(callback) {
       listeners.kernel.push(callback);
       return {

@@ -1,8 +1,8 @@
 const path = require("path");
 const manifest = require("../package.json");
-const main = require("../lib/main");
-const WatchesSession = require("../lib/watches-session");
-const WatchesPane = require("../lib/watches-pane");
+let main;
+let WatchesSession;
+let WatchesPane;
 const DESERIALIZER = "jupyter-watches/WatchesPane";
 function fakeKernel() {
   return {
@@ -28,7 +28,6 @@ function fakeProvider(kernel) {
       return disposedSubscriptions;
     },
     getActiveKernel: () => kernel,
-    getFocusedEditor: () => null,
     onDidChangeKernel: () => ({
       dispose: () => disposedSubscriptions++,
     }),
@@ -49,6 +48,11 @@ function fakeOutputService() {
 // subsequent activate() call.
 describe("restoring the Watches pane", () => {
   let loadedPackage = null;
+  beforeEach(() => {
+    main = require("../lib/main");
+    WatchesSession = require("../lib/watches-session");
+    WatchesPane = require("../lib/watches-pane");
+  });
   afterEach(async () => {
     if (loadedPackage && lumine.packages.isPackageActive(loadedPackage.name)) {
       await lumine.packages.deactivatePackage(loadedPackage.name);
@@ -82,6 +86,7 @@ describe("restoring the Watches pane", () => {
     spyOn(lumine.packages, "hasActivatedInitialPackages").and.returnValue(false);
     loadedPackage = lumine.packages.loadPackage(path.resolve(__dirname, ".."));
     const restored = lumine.deserializers.deserialize(state);
+    main = loadedPackage.mainModule;
     expect(restored).toBeTruthy();
     expect(restored.serialize()).toEqual(state);
     expect(restored.component.session).toBe(main.getSession());
