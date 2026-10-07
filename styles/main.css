@@ -77,7 +77,7 @@
         &:focus {
           &::-webkit-slider-thumb {
             -webkit-appearance: none;
-            background-color: var(--button-background-color-selected);
+            background-color: var(--accent-indicator-color);
             border: 1px solid var(--background-color-selected);
           }
 
