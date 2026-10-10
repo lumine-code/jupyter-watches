@@ -144,6 +144,7 @@ class Watch {
               this.outputService ? (
                 this.outputService.renderDisplay(this.outputService.normalizeOutput(output), {
                   kernel: this.store.kernel,
+                  kernelGeneration: history.selectedKernelGeneration,
                 })
               ) : (
                 <pre>

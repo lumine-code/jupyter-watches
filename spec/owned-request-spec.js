@@ -1,5 +1,6 @@
 const etch = require("@lumine-code/etch");
 const { WatchStore } = require("../lib/watch-store");
+const Watch = require("../lib/watch");
 const WatchesSession = require("../lib/watches-session");
 const WatchesPane = require("../lib/watches-pane");
 const {
@@ -19,6 +20,110 @@ function kernel() {
   });
 }
 describe("owned watch models", () => {
+  it("renders each selected history run with the session generation that produced it", async () => {
+    const source = kernel();
+    const watch = new WatchStore(source, createOutputAccumulator);
+    const outputService = {
+      normalizeOutput: (output) => output,
+      renderDisplay: jasmine
+        .createSpy("renderDisplay")
+        .and.callFake((output) => etch.dom("pre", {}, output.data["text/plain"])),
+    };
+    const component = new Watch({ store: watch, outputService });
+    const oldOutput = {
+      output_type: "display_data",
+      data: { "text/plain": "old plot" },
+      metadata: {},
+    };
+    const newOutput = {
+      output_type: "display_data",
+      data: { "text/plain": "new plot" },
+      metadata: {},
+    };
+    try {
+      watch.setCode("plot");
+      watch.toggleWatching();
+      source.requests[0].receive(oldOutput);
+      source.requests[0].finish();
+      await settle();
+      source.advanceGeneration();
+      watch.run();
+      source.requests[1].receive(newOutput);
+      source.requests[1].finish();
+      await settle();
+
+      watch.outputStore.setIndex(0);
+      etch.updateSync(component);
+      expect(outputService.renderDisplay.calls.mostRecent().args).toEqual([
+        oldOutput,
+        { kernel: source, kernelGeneration: 0 },
+      ]);
+      expect(component.element.textContent).toContain("old plot");
+      expect(source.generation).toBe(1);
+
+      watch.outputStore.setIndex(1);
+      etch.updateSync(component);
+      expect(outputService.renderDisplay.calls.mostRecent().args).toEqual([
+        newOutput,
+        { kernel: source, kernelGeneration: 1 },
+      ]);
+      expect(component.element.textContent).toContain("new plot");
+      expect(watch.outputStore.history).toEqual([[oldOutput], [newOutput]]);
+      expect(watch.outputStore.outputs).toEqual([oldOutput, newOutput]);
+    } finally {
+      component.destroy();
+      watch.destroy();
+    }
+  });
+
+  it("keeps unattributed history detached across renderer replacement and a new generation", async () => {
+    const source = kernel();
+    const watch = new WatchStore(source);
+    const renderer = () => ({
+      normalizeOutput: (output) => output,
+      renderDisplay: jasmine
+        .createSpy("renderDisplay")
+        .and.callFake((output) => etch.dom("pre", {}, output.text)),
+    });
+    const original = renderer();
+    const storedOutput = { output_type: "stream", name: "stdout", text: "stored" };
+    const newOutput = { output_type: "stream", name: "stdout", text: "new" };
+    watch.outputStore.appendOutput(storedOutput);
+    const component = new Watch({ store: watch, outputService: original });
+    try {
+      expect(original.renderDisplay.calls.mostRecent().args[1]).toEqual({
+        kernel: source,
+        kernelGeneration: null,
+      });
+      source.advanceGeneration();
+      watch.outputStore.setAccumulatorFactory(createOutputAccumulator);
+      const replacement = renderer();
+      await component.update({ outputService: replacement });
+      expect(replacement.renderDisplay.calls.mostRecent().args[1]).toEqual({
+        kernel: source,
+        kernelGeneration: null,
+      });
+
+      watch.setCode("value");
+      watch.toggleWatching();
+      source.requests[0].receive(newOutput);
+      source.requests[0].finish();
+      await settle();
+      etch.updateSync(component);
+      expect(replacement.renderDisplay.calls.mostRecent().args[1]).toEqual({
+        kernel: source,
+        kernelGeneration: 1,
+      });
+      watch.outputStore.setIndex(0);
+      etch.updateSync(component);
+      expect(replacement.renderDisplay.calls.mostRecent().args[1].kernelGeneration).toBeNull();
+      expect(watch.outputStore.history).toEqual([[storedOutput], [newOutput]]);
+    } finally {
+      component.destroy();
+      watch.destroy();
+    }
+  });
+
   it("keeps its expression and history while cancelling an older session generation", async () => {
     const source = kernel();
     const watch = new WatchStore(source);
