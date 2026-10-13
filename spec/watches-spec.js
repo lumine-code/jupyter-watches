@@ -415,7 +415,7 @@ describe("watches pane teardown", () => {
   it("leaves no tab behind when destroyed directly", async () => {
     const session = new WatchesSession();
     const item = new WatchesPane(session);
-    const pane = lumine.workspace.getCenter().getActivePane();
+    const pane = lumine.workspace.getRightDock().getActivePane();
     pane.addItem(item);
     await settle();
     expect(pane.getItems()).toContain(item);
