@@ -14,6 +14,8 @@ A watch is an expression the kernel runs again every time it finishes running an
 - **Per kernel**: each kernel keeps its own watches, and the panel follows the active one.
 - **Cached MCP access**: assistants can read existing watches and their retained outputs without running or resuming expressions.
 
+![Use jupyter-watches with the running Python kernel.](.github/demo.png)
+
 ## Installation
 
 To install `jupyter-watches` search for it in the Install pane of the Lumine settings, or run the command `lumine --install lumine-code/jupyter-watches`.

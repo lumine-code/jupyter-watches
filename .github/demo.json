@@ -1,0 +1,16 @@
+{
+  "title": "jupyter-watches",
+  "description": "Use jupyter-watches with the running Python kernel.",
+  "recordedOn": "2026-10-13",
+  "sourceRevision": "cf6c764e3c268666e066137a1957a7ef31648256",
+  "mode": "normal",
+  "fontSettings": "default",
+  "images": [
+    {
+      "file": "demo.png",
+      "label": "Use jupyter-watches with the running Python kernel.",
+      "width": 1200,
+      "height": 760
+    }
+  ]
+}
