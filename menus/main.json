@@ -1,6 +1,20 @@
 {
   "menu": [
     {
+      "label": "View",
+      "submenu": [
+        {
+          "label": "Toggle View",
+          "submenu": [
+            {
+              "label": "Jupyter Watches",
+              "command": "jupyter-watches:toggle"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "label": "Packages",
       "submenu": [
         {
