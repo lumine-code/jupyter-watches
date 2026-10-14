@@ -4,13 +4,13 @@
       "label": "View",
       "submenu": [
         {
-          "label": "Toggle View",
+          "label": "Jupyter",
           "submenu": [
             {
-              "label": "Jupyter Watches",
+              "label": "Toggle Watches Panel",
               "command": "jupyter-watches:toggle",
-              "group": "panels",
-              "order": 10
+              "group": "toggle",
+              "order": 40
             }
           ]
         }
