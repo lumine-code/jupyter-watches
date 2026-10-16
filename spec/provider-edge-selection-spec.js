@@ -44,6 +44,7 @@ describe("jupyter-watches surviving service connections", () => {
     return {
       getActiveKernel: () => target,
       getKernelForEditor: () => target,
+      peekKernelState: () => ({ language: target.language }),
       onDidChangeKernel: () => new Disposable(),
       onDidRemoveKernel: () => new Disposable(),
     };

@@ -28,7 +28,15 @@ describe("jupyter-watches command context ownership", () => {
     expect(lumine.commands.canDispatch(lumine.workspace.getElement(), "jupyter-watches:add")).toBe(
       false,
     );
+    expect(lumine.commands.canDispatch(editor.element, "jupyter-watches:add")).toBe(false);
+    const edge = main.consumeJupyterKernel({
+      getActiveKernel: () => null,
+      peekKernelState: () => ({ language: "python" }),
+      onDidChangeKernel: () => new Disposable(),
+      onDidRemoveKernel: () => new Disposable(),
+    });
     expect(lumine.commands.canDispatch(editor.element, "jupyter-watches:add")).toBe(true);
+    edge.dispose();
     const mini = lumine.workspace.buildTextEditor({ mini: true });
     try {
       lumine.workspace.getElement().appendChild(mini.element);
@@ -44,6 +52,7 @@ describe("jupyter-watches command context ownership", () => {
     main.consumeJupyterKernel({
       getActiveKernel: () => active,
       getKernelForEditor: lookup,
+      peekKernelState: () => ({ language: "python", connectionState: "ready" }),
       onDidChangeKernel: () => new Disposable(),
       onDidRemoveKernel: () => new Disposable(),
     });
@@ -68,6 +77,7 @@ describe("jupyter-watches command context ownership", () => {
     main.consumeJupyterKernel({
       getActiveKernel: () => null,
       getKernelForEditor: lookup,
+      peekKernelState: () => ({ language: "python", connectionState: "ready" }),
       onDidChangeKernel: () => new Disposable(),
       onDidRemoveKernel: () => new Disposable(),
     });
