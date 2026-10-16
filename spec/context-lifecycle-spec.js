@@ -24,6 +24,19 @@ describe("jupyter-watches command context ownership", () => {
     main.deactivate();
     editor.destroy();
   });
+  it("offers expression actions only inside a non-mini editor", () => {
+    expect(lumine.commands.canDispatch(lumine.workspace.getElement(), "jupyter-watches:add")).toBe(
+      false,
+    );
+    expect(lumine.commands.canDispatch(editor.element, "jupyter-watches:add")).toBe(true);
+    const mini = lumine.workspace.buildTextEditor({ mini: true });
+    try {
+      lumine.workspace.getElement().appendChild(mini.element);
+      expect(lumine.commands.canDispatch(mini.element, "jupyter-watches:add")).toBe(false);
+    } finally {
+      mini.destroy();
+    }
+  });
   it("runs against the dispatch editor's kernel instead of the active document's kernel", async () => {
     const active = kernel();
     const target = kernel();
