@@ -37,7 +37,7 @@ class Watch {
     this.disposables = new CompositeDisposable(
       store.onDidUpdate(sync),
       store.outputStore.onDidUpdate(() => etch.update(this)),
-      this.editor.onDidChange(() => store.setCode(this.editor.getText())),
+      this.editor.getBuffer().onDidChangeText(() => store.setCode(this.editor.getText())),
       lumine.commands.add(this.editor.element, { "core:confirm": () => this.handleRun() }),
       lumine.commands.add(this.refs.history, {
         "core:move-left": () => store.outputStore.decrementIndex(),
