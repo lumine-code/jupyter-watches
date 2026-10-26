@@ -1,4 +1,5 @@
 /** @jsx etch.dom */
+const InputBudget = require("./input-budget");
 const etch = require("@lumine-code/etch");
 const { CompositeDisposable } = require("lumine");
 const { autocompleteConsumer } = require("./autocomplete");
@@ -15,15 +16,24 @@ class Watch {
       softWrapped: true,
       lineNumberGutterVisible: false,
     });
-    this.editor.setText(store.getCode());
+    this.editor.setText(store.codeSource);
     if (store.kernel.grammar)
       lumine.grammars.assignLanguageMode(this.editor.getBuffer(), store.kernel.grammar.scopeName);
     this.editor.element.classList.add("watch-input");
     this.editor.element.setAttribute("input", "");
     this.refs.editorContainer.appendChild(this.editor.element);
+    this.budget = new InputBudget(this.editor, this.refs.editorContainer, {
+      limit: 64 * 1024,
+      label: "Watch expression",
+    });
     autocompleteConsumer.watchPanelEditor(this.editor);
     const sync = () => {
-      if (this.editor.getText() !== store.getCode()) this.editor.setText(store.getCode());
+      this._settingText = true;
+      try {
+        this.budget.sync(store.codeSource);
+      } finally {
+        this._settingText = false;
+      }
       if (store.focusRequested) {
         store.focusRequested = false;
         this.editor.element.focus();
@@ -37,7 +47,11 @@ class Watch {
     this.disposables = new CompositeDisposable(
       store.onDidUpdate(sync),
       store.outputStore.onDidUpdate(() => etch.update(this)),
-      this.editor.getBuffer().onDidChangeText(() => store.setCode(this.editor.getText())),
+      this.editor.getBuffer().onDidChangeText(() => {
+        if (this._settingText) return;
+        this.budget.validate();
+        store.setCode(this.editor.getBuffer().getTextSnapshot());
+      }),
       lumine.commands.add(this.editor.element, { "core:confirm": () => this.handleRun() }),
       lumine.commands.add(this.refs.history, {
         "core:move-left": () => store.outputStore.decrementIndex(),
@@ -50,6 +64,7 @@ class Watch {
   }
 
   handleRun = () => {
+    if (!this.budget.validate()) return;
     if (!this.store.isWatching) {
       this.store.toggleWatching();
     } else {
@@ -82,7 +97,7 @@ class Watch {
             className="btn btn-xs icon icon-playback-play watch-run-btn"
             onClick={this.handleRun}
             title="Run watch"
-            disabled={this.store.isWatching}
+            disabled={this.store.isWatching || Boolean(this.store.codeError)}
           />
           <button
             className="btn btn-xs icon icon-playback-pause watch-pause-btn"
@@ -173,6 +188,7 @@ class Watch {
   destroy() {
     this.disposables.dispose();
     this.editor.element.removeEventListener("blur", this.blur);
+    this.budget.dispose();
     this.editor.destroy();
     return etch.destroySync(this);
   }

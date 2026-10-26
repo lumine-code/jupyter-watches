@@ -142,6 +142,36 @@ describe("cached watch MCP tools", () => {
     expect(JSON.stringify(all)).not.toContain("binarybinary");
     expect(all.history[0].richDataOmitted).toBe(true);
   });
+  it("previews oversized drafts without materializing them or reading the last accepted code", () => {
+    const watch = add();
+    let source = require("lumine").TextBuffer.createTextSnapshot("x".repeat(65536));
+    while (source.length < 1024 * 1024 * 1024)
+      source = source.replace(source.length, source.length, source);
+    watch.setCode(source);
+    const read = spyOn(watch, "getCode").and.throwError("invalid draft string read");
+    const result = tools.GetJupyterWatch.execute({
+      kernelId: "second",
+      watchId: watch.id,
+      maxChars: 64,
+    });
+    expect(result.watch.expression).toBe("x".repeat(64));
+    expect(result.watch.expressionTruncated).toBeTrue();
+    expect(result.watch.inputError).toContain("65,536");
+    expect(read).not.toHaveBeenCalled();
+    expect(kernels[1].request).not.toHaveBeenCalled();
+  });
+  it("keeps freshness exact when a valid expression exceeds the presentation window", async () => {
+    const watch = add(kernels[1], "x".repeat(500));
+    evaluate(watch, kernels[1], { output_type: "stream", name: "stdout", text: "ok" });
+    await settle();
+    const result = tools.GetJupyterWatch.execute({
+      kernelId: "second",
+      watchId: watch.id,
+      maxChars: 64,
+    });
+    expect(result.watch.expressionTruncated).toBeTrue();
+    expect(result.watch.stale).toBeFalse();
+  });
   it("marks edited, running, changed-kernel and no-new-output snapshots stale", async () => {
     const watch = add();
     evaluate(watch, kernels[1], {

@@ -71,3 +71,5 @@ Paste this into your `styles.css` to give each watch more vertical room:
 ## Contributing
 
 Got ideas to make this package better, found a bug, or want to help add new features? Just drop your thoughts on GitHub. Any feedback is welcome!
+
+Watch inputs retain their complete draft as an immutable text snapshot. Evaluation accepts at most 65,536 UTF-16 units; larger drafts display an error, cancel pending evaluation and block manual and automatic runs until shortened. Importing a larger selection keeps the whole draft without executing it.
