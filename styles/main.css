@@ -69,7 +69,7 @@
           background: var(--background-color-selected);
         }
 
-        &:focus {
+        &:focus-visible {
           &::-webkit-slider-thumb {
             -webkit-appearance: none;
             background-color: var(--accent-indicator-color);
