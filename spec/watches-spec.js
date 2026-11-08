@@ -392,6 +392,24 @@ describe("watches panel", () => {
     expect(component.element.querySelectorAll(".watch-view").length).toBe(2);
     expect(component.element.querySelectorAll(".history").length).toBe(2);
   });
+  it("restores the empty body after the last watch while keeping Add watch reachable", async () => {
+    session.setProvider(fakeProvider(fakeKernel()));
+    await settle();
+    render();
+    const empty = () => component.element.querySelector(".panel-empty-state");
+    expect(empty().textContent).toBe("No watches to display.");
+    expect(empty().contains(component.element.querySelector("button"))).toBeFalse();
+    const store = session.storeFor();
+    component.element.querySelector("button").click();
+    flush(component);
+    await settle();
+    expect(empty()).toBeNull();
+    expect(component.element.querySelector(".watch-view")).not.toBeNull();
+    store.removeWatchByRef(store.watches[0]);
+    flush(component);
+    expect(empty().textContent).toBe("No watches to display.");
+    expect(component.element.querySelector("button").textContent).toContain("Add watch");
+  });
   it("keeps the real watch editor attached across a patch", async () => {
     session.setProvider(fakeProvider(fakeKernel()));
     await settle();

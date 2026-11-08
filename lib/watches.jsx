@@ -56,14 +56,25 @@ class Watches {
         etch.getScheduler().updateDocument(() => lumine.workspace.hide(WATCHES_URI));
       }
       return (
-        <div className="sidebar watch-sidebar" attributes={{ "data-scrollbar": "auto" }}>
+        <div
+          className="sidebar watch-sidebar panel-empty-state"
+          attributes={{ "data-scrollbar": "auto" }}
+        >
           {renderEmptyMessage([<li>No kernel running</li>])}
         </div>
       );
     }
 
     return (
-      <div className="sidebar watch-sidebar" attributes={{ "data-scrollbar": "auto" }}>
+      <div
+        className={`sidebar watch-sidebar${watchesStore.watches.length ? "" : " watch-sidebar-empty"}`}
+        attributes={{ "data-scrollbar": "auto" }}
+      >
+        {watchesStore.watches.length === 0 ? (
+          <div className="panel-empty-state">
+            {renderEmptyMessage([<li>No watches to display.</li>])}
+          </div>
+        ) : null}
         {watchesStore.watches.map((watch) => (
           <Watch
             key={watch.id}

@@ -9,6 +9,16 @@
     height: 100%;
   }
 
+  .watch-sidebar-empty {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+
+    > .btn-group {
+      flex: none;
+    }
+  }
+
   .multiline-container {
     display: flex;
     border: solid 1px var(--base-border-color);
