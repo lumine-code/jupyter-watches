@@ -94,26 +94,34 @@ class Watch {
       <div className="watch-view">
         <div className="watch-toolbar">
           <button
-            className="btn btn-xs icon icon-playback-play watch-run-btn"
+            type="button"
+            className="btn btn-xs icon-button icon icon-playback-play watch-run-btn"
             onClick={this.handleRun}
             title="Run watch"
+            attributes={{ "aria-label": "Run watch" }}
             disabled={this.store.isWatching || Boolean(this.store.codeError)}
           />
           <button
-            className="btn btn-xs icon icon-playback-pause watch-pause-btn"
+            type="button"
+            className="btn btn-xs icon-button icon icon-playback-pause watch-pause-btn"
             onClick={this.handlePause}
             title="Pause watching"
+            attributes={{ "aria-label": "Pause watching" }}
             disabled={!this.store.isWatching}
           />
           <button
-            className="btn btn-xs icon icon-trashcan watch-clear-btn"
+            type="button"
+            className="btn btn-xs icon-button icon-button-no-scale icon icon-trashcan watch-clear-btn"
             onClick={this.handleClear}
             title="Clear output"
+            attributes={{ "aria-label": "Clear output" }}
           />
           <button
-            className="btn btn-xs icon icon-x watch-remove-btn"
+            type="button"
+            className="btn btn-xs icon-button icon-button-no-scale icon icon-x watch-remove-btn"
             onClick={this.handleRemove}
             title="Remove watch"
+            attributes={{ "aria-label": "Remove watch" }}
           />
         </div>
         <div className="watch-editor-container" ref="editorContainer" />
@@ -122,17 +130,21 @@ class Watch {
             <div className="slider">
               <div className="current-output">
                 <button
-                  className="btn btn-xs icon icon-chevron-left"
+                  type="button"
+                  className="btn btn-xs icon-button icon icon-chevron-left"
                   onClick={() => history.decrementIndex()}
                   title="Previous run"
+                  attributes={{ "aria-label": "Previous run" }}
                 />
                 <span>
                   {String(history.index + 1)}/{String(history.history.length)}
                 </span>
                 <button
-                  className="btn btn-xs icon icon-chevron-right"
+                  type="button"
+                  className="btn btn-xs icon-button icon icon-chevron-right"
                   onClick={() => history.incrementIndex()}
                   title="Next run"
+                  attributes={{ "aria-label": "Next run" }}
                 />
               </div>
               <input
