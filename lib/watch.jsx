@@ -95,7 +95,7 @@ class Watch {
         <div className="watch-toolbar">
           <button
             type="button"
-            className="btn btn-xs icon-button icon icon-playback-play watch-run-btn"
+            className="btn btn-xs icon icon-playback-play watch-run-btn native-key-bindings"
             onClick={this.handleRun}
             title="Run watch"
             attributes={{ "aria-label": "Run watch" }}
@@ -103,7 +103,7 @@ class Watch {
           />
           <button
             type="button"
-            className="btn btn-xs icon-button icon icon-playback-pause watch-pause-btn"
+            className="btn btn-xs icon icon-playback-pause watch-pause-btn native-key-bindings"
             onClick={this.handlePause}
             title="Pause watching"
             attributes={{ "aria-label": "Pause watching" }}
@@ -111,14 +111,14 @@ class Watch {
           />
           <button
             type="button"
-            className="btn btn-xs icon-button icon-button-no-scale icon icon-trashcan watch-clear-btn"
+            className="btn btn-xs icon icon-trashcan watch-clear-btn native-key-bindings"
             onClick={this.handleClear}
             title="Clear output"
             attributes={{ "aria-label": "Clear output" }}
           />
           <button
             type="button"
-            className="btn btn-xs icon-button icon-button-no-scale icon icon-x watch-remove-btn"
+            className="btn btn-xs icon icon-x watch-remove-btn native-key-bindings"
             onClick={this.handleRemove}
             title="Remove watch"
             attributes={{ "aria-label": "Remove watch" }}
@@ -131,7 +131,7 @@ class Watch {
               <div className="current-output">
                 <button
                   type="button"
-                  className="btn btn-xs icon-button icon icon-chevron-left"
+                  className="btn btn-xs icon icon-chevron-left native-key-bindings"
                   onClick={() => history.decrementIndex()}
                   title="Previous run"
                   attributes={{ "aria-label": "Previous run" }}
@@ -141,7 +141,7 @@ class Watch {
                 </span>
                 <button
                   type="button"
-                  className="btn btn-xs icon-button icon icon-chevron-right"
+                  className="btn btn-xs icon icon-chevron-right native-key-bindings"
                   onClick={() => history.incrementIndex()}
                   title="Next run"
                   attributes={{ "aria-label": "Next run" }}
